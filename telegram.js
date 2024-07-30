@@ -80,11 +80,13 @@ const monitorWebsite = async () => {
         (el) => el.innerHTML
       );
 
-      
+      if (currentContent !== initialContent) {
         await sendTelegramMessage("The content has been updated.");
         console.log("Content updated.");
         initialContent = currentContent; // Update the initial content
-      
+      } else {
+        console.log("Content not updated.");
+      }
     } catch (error) {
       console.error("Failed to check content:", error);
     }
