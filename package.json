@@ -1,0 +1,20 @@
+{
+  "name": "puppeteer-project",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon telegram.js"
+  },
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "nodemon": "^3.1.4",
+    "puppeteer": "^22.14.0",
+    "robotjs": "^0.6.0"
+  }
+}
