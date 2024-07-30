@@ -6,8 +6,8 @@ const TELEGRAM_BOT_TOKEN = "7027110651:AAH-BiOhuxnyqFcvvoZaOPdTU8r_mAmWutU"; // 
 const CHAT_ID = "5971736824"; // Replace with your Telegram chat ID
 
 // URL and selector for the website and the specific section
-const URL = "https://github.com/"; // Replace with the URL of the website to monitor
-const SECTION_SELECTOR = "#site-details-dialog"; // Replace with the CSS selector of the section
+const URL = "https://www.prothomalo.com/collection/latest"; // Replace with the URL of the website to monitor
+const SECTION_SELECTOR = ".stKlc > a"; // Replace with the selector of the section to monitor
 
 // Function to send a message via Telegram
 const sendTelegramMessage = async (message) => {
@@ -65,7 +65,12 @@ const monitorWebsite = async () => {
   }
 
   // Get the initial content of the section
-  let initialContent = await page.$eval(SECTION_SELECTOR, (el) => el.innerHTML);
+  let initialContent = await page.$eval(SECTION_SELECTOR, (el) => {
+    const link = el.href;
+    const title = el.getAttribute("aria-label");
+
+    return { link, title };
+  });
   console.log("Monitoring website...");
 
   setInterval(async () => {
@@ -75,13 +80,16 @@ const monitorWebsite = async () => {
 
       // Wait for the section to be available again
       await page.waitForSelector(SECTION_SELECTOR, { timeout: 10000 });
-      const currentContent = await page.$eval(
-        SECTION_SELECTOR,
-        (el) => el.innerHTML
-      );
+      const currentContent = await page.$eval(SECTION_SELECTOR, (el) => {
+        const link = el.href;
+        const title = el.getAttribute("aria-label");
 
-      if (currentContent !== initialContent) {
-        await sendTelegramMessage("The content has been updated.");
+        return { link, title };
+      });
+
+      if (JSON.stringify(currentContent) !== JSON.stringify(initialContent)) {
+        const message = `Link: ${currentContent.link}\nTitle: ${currentContent.title}`;
+        await sendTelegramMessage(message);
         console.log("Content updated.");
         initialContent = currentContent; // Update the initial content
       } else {
@@ -90,7 +98,7 @@ const monitorWebsite = async () => {
     } catch (error) {
       console.error("Failed to check content:", error);
     }
-  }, 6000); // Check every 6 seconds
+  }, 30000); // Check every 6 seconds
 
   // Uncomment the following line if you want to close the browser after monitoring
   // await browser.close();
