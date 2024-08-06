@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Path to the file storing chat IDs
-const CHAT_IDS_FILE = path.join(__dirname, "chat_ids.json");
+const CHAT_IDS_FILE = path.join(__dirname, "");
 
 // URL and selector for the website and the specific section
 const URL = "https://www.prothomalo.com/collection/latest"; // Replace with the URL of the website to monitor
