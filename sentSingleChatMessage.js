@@ -1,19 +1,47 @@
 import puppeteer from "puppeteer";
 import fetch from "node-fetch";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 
-// Replace with your Telegram Bot Token and Chat ID
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN; // Replace with your Telegram bot token
-const CHAT_ID = process.env.CHAT_ID; // Replace with your Telegram chat ID
+// Replace with your Telegram Bot Token
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN; // Use environment variable for security
+
+// Get directory name
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Path to the file storing chat IDs
+const CHAT_IDS_FILE = path.join(__dirname, "chat_ids.json");
 
 // URL and selector for the website and the specific section
 const URL = "https://www.prothomalo.com/collection/latest"; // Replace with the URL of the website to monitor
 const SECTION_SELECTOR = ".stKlc > a"; // Replace with the selector of the section to monitor
 
+// Function to read chat IDs from the file
+const getChatIds = () => {
+  if (!fs.existsSync(CHAT_IDS_FILE)) {
+    return [];
+  }
+  const data = fs.readFileSync(CHAT_IDS_FILE);
+  return JSON.parse(data);
+};
+
+// Function to save a chat ID to the file
+const saveChatId = (chatId) => {
+  const chatIds = getChatIds();
+  if (!chatIds.includes(chatId)) {
+    chatIds.push(chatId);
+    fs.writeFileSync(CHAT_IDS_FILE, JSON.stringify(chatIds));
+  }
+};
+
 // Function to send a message via Telegram
-const sendTelegramMessage = async (message) => {
+const sendTelegramMessage = async (message, chatId) => {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
   const payload = {
-    chat_id: CHAT_ID,
+    chat_id: chatId,
     text: message,
   };
 
@@ -26,12 +54,20 @@ const sendTelegramMessage = async (message) => {
 
     const data = await response.json();
     if (data.ok) {
-      console.log("Message sent successfully:", message);
+      console.log(`Message sent successfully to chat ID: ${chatId}`);
     } else {
-      console.error("Failed to send message:", data);
+      console.error(`Failed to send message to chat ID: ${chatId}`, data);
     }
   } catch (error) {
-    console.error("Error sending message:", error);
+    console.error(`Error sending message to chat ID: ${chatId}`, error);
+  }
+};
+
+// Function to broadcast a message to all stored chat IDs
+const broadcastMessage = async (message) => {
+  const chatIds = getChatIds();
+  for (const chatId of chatIds) {
+    await sendTelegramMessage(message, chatId);
   }
 };
 
@@ -89,7 +125,7 @@ const monitorWebsite = async () => {
 
       if (JSON.stringify(currentContent) !== JSON.stringify(initialContent)) {
         const message = `${currentContent.link}\n${currentContent.title}`;
-        await sendTelegramMessage(message);
+        await broadcastMessage(message);
         console.log("Content updated.");
         initialContent = currentContent; // Update the initial content
       } else {
@@ -99,9 +135,6 @@ const monitorWebsite = async () => {
       console.error("Failed to check content:", error);
     }
   }, 30000); // Check every 30 seconds
-
-  // Uncomment the following line if you want to close the browser after monitoring
-  // await browser.close();
 };
 
 monitorWebsite();

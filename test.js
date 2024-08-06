@@ -2,8 +2,8 @@ import puppeteer from "puppeteer";
 import fetch from "node-fetch";
 
 // Replace with your Telegram Bot Token and Chat ID
-const TELEGRAM_BOT_TOKEN = "7027110651:AAH-BiOhuxnyqFcvvoZaOPdTU8r_mAmWutU"; // Replace with your Telegram bot token
-const CHAT_ID = "5971736824"; // Replace with your Telegram chat ID
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN; // Replace with your Telegram bot token
+const CHAT_ID = process.env.CHAT_ID; // Replace with your Telegram chat ID
 
 // URL and selector for the website and the specific section
 const URL = "https://www.prothomalo.com/collection/latest"; // Replace with the URL of the website to monitor
@@ -104,6 +104,3 @@ const monitorWebsite = async () => {
 };
 
 monitorWebsite();
-
-
-
