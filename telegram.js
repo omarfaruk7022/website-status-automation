@@ -21,8 +21,6 @@ const sendTelegramMessage = async (message) => {
     text: message,
   };
 
-
-  
   try {
     const response = await fetch(url, {
       method: "POST",
@@ -104,7 +102,7 @@ const monitorWebsite = async () => {
     } catch (error) {
       console.error("Failed to check content:", error);
     }
-  }, 60000); // Check every 60 seconds
+  }, 20000); // Check every 60 seconds
 
   // Uncomment the following line if you want to close the browser after monitoring
   // await browser.close();
