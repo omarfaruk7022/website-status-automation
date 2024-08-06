@@ -21,6 +21,8 @@ const sendTelegramMessage = async (message) => {
     text: message,
   };
 
+
+  
   try {
     const response = await fetch(url, {
       method: "POST",
