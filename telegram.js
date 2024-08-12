@@ -10,34 +10,47 @@ const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN; // Replace with your 
 const CHAT_ID = process.env.CHAT_ID; // Replace with your Telegram chat ID
 
 // URL and selector for the website and the specific section
-const URL = "https://www.prothomalo.com/collection/latest"; // Replace with the URL of the website to monitor
-const SECTION_SELECTOR = ".stKlc > a"; // Replace with the selector of the section to monitor
+const URL = "https://www.dhakapost.com/latest-news"; // Replace with the URL of the website to monitor
+// const SECTION_SELECTOR = ".stKlc > a"; // Replace with the selector of the section to monitor
+const SECTION_SELECTOR = "div.mb-6.last\\:mb-0.relative:first-of-type > a";
 
 // Function to send a message via Telegram
-const sendTelegramMessage = async (message) => {
+const sendTelegramMessage = async (message, retries = 3) => {
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
   const payload = {
     chat_id: CHAT_ID,
     text: message,
   };
 
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-    const data = await response.json();
-    if (data.ok) {
-      console.log("Message sent successfully:", message);
-    } else {
-      console.error("Failed to send message:", data);
+      const data = await response.json();
+      if (data.ok) {
+        console.log("Message sent successfully:", message);
+        return; // Exit function after successful send
+      } else {
+        console.error(`Failed to send message (Attempt ${attempt}):`, data);
+      }
+    } catch (error) {
+      console.error(`Error sending message (Attempt ${attempt}):`, error);
+
+      if (error.code === 'ETIMEDOUT' && attempt < retries) {
+        console.log("Retrying...");
+        await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds before retrying
+      } else {
+        console.error("Failed to send message after multiple attempts.");
+        return;
+      }
     }
-  } catch (error) {
-    console.error("Error sending message:", error);
   }
 };
+
 
 // Function to monitor the website
 const monitorWebsite = async () => {
@@ -71,11 +84,13 @@ const monitorWebsite = async () => {
   // Get the initial content of the section
   let initialContent = await page.$eval(SECTION_SELECTOR, (el) => {
     const link = el.href;
-    const title = el.getAttribute("aria-label");
-
-    return { link, title };
+    const title = el.querySelector("h2").innerText;
+    const time = el.querySelector("p:last-of-type").innerText;
+    
+    return { link, title, time };
   });
   console.log("Monitoring website...");
+
 
   setInterval(async () => {
     try {
@@ -86,15 +101,16 @@ const monitorWebsite = async () => {
       await page.waitForSelector(SECTION_SELECTOR, { timeout: 10000 });
       const currentContent = await page.$eval(SECTION_SELECTOR, (el) => {
         const link = el.href;
-        const title = el.getAttribute("aria-label");
-
-        return { link, title };
+        const title = el.querySelector("h2").innerText;
+        const time = el.querySelector("p:last-of-type").innerText;
+        console.log(link, title, time);
+        return { link, title, time };
       });
 
       if (JSON.stringify(currentContent) !== JSON.stringify(initialContent)) {
-        const message = `${currentContent.link}\n${currentContent.title}`;
+        const message = `${currentContent.link}\n${currentContent.title}\n${currentContent.time}`;
         await sendTelegramMessage(message);
-        console.log("Content updated.");
+        console.log("Content updated.",currentContent);
         initialContent = currentContent; // Update the initial content
       } else {
         console.log("Content not updated.");
