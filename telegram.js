@@ -32,7 +32,7 @@ const sendTelegramMessage = async (message, retries = 3) => {
 
       const data = await response.json();
       if (data.ok) {
-        console.log("Message sent successfully:", message);
+        console.log("Message sent successfully:");
         return; // Exit function after successful send
       } else {
         console.error(`Failed to send message (Attempt ${attempt}):`, data);
@@ -40,9 +40,9 @@ const sendTelegramMessage = async (message, retries = 3) => {
     } catch (error) {
       console.error(`Error sending message (Attempt ${attempt}):`, error);
 
-      if (error.code === 'ETIMEDOUT' && attempt < retries) {
+      if (error.code === "ETIMEDOUT" && attempt < retries) {
         console.log("Retrying...");
-        await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds before retrying
+        await new Promise((resolve) => setTimeout(resolve, 3000)); // Wait 3 seconds before retrying
       } else {
         console.error("Failed to send message after multiple attempts.");
         return;
@@ -50,7 +50,6 @@ const sendTelegramMessage = async (message, retries = 3) => {
     }
   }
 };
-
 
 // Function to monitor the website
 const monitorWebsite = async () => {
@@ -86,11 +85,9 @@ const monitorWebsite = async () => {
     const link = el.href;
     const title = el.querySelector("h2").innerText;
     const time = el.querySelector("p:last-of-type").innerText;
-    
     return { link, title, time };
   });
   console.log("Monitoring website...");
-
 
   setInterval(async () => {
     try {
@@ -104,13 +101,23 @@ const monitorWebsite = async () => {
         const title = el.querySelector("h2").innerText;
         const time = el.querySelector("p:last-of-type").innerText;
         console.log(link, title, time);
-        return { link, title, time };
+        if (
+          link.toLowerCase().includes("entertainment") ||
+          link.toLowerCase().includes("jobs-career")
+        ) {
+          return;
+        } else {
+          return { link, title, time };
+        }
       });
-
       if (JSON.stringify(currentContent) !== JSON.stringify(initialContent)) {
+        if (!currentContent) {
+          console.log("Sensitive news found.");
+          return;
+        }
         const message = `${currentContent.link}\n${currentContent.title}\n${currentContent.time}`;
         await sendTelegramMessage(message);
-        console.log("Content updated.",currentContent);
+        console.log("Content updated.", currentContent);
         initialContent = currentContent; // Update the initial content
       } else {
         console.log("Content not updated.");
